@@ -7,30 +7,34 @@ import Animated, {
 	useAnimatedStyle,
 	useDerivedValue,
 	useSharedValue,
+	withDelay,
 	withSpring,
 	WithSpringConfig,
 	withTiming,
 } from "react-native-reanimated";
 type Size = {
 	initial: { width: number; height: number };
-	final: { width: number; height: number };
+	final: { width: number; height: number; marginL: number; marginB: number };
 };
 
 type PropTypes = {
 	size: Size;
+	initialCoordinates: { x: number; y: number };
 	timeUntilLongPressTrigger?: number;
 	children: JSX.Element;
 };
 
-const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children }: PropTypes) => {
+const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children, initialCoordinates }: PropTypes) => {
 	//General
 	const NO_BOUNCE = { damping: 100, stiffness: 300 };
 	const MID_BOUNCE = { damping: 26, stiffness: 300 };
-	const MAX_BOUNCE = { damping: 23, stiffness: 300 };
+	const MAX_BOUNCE = { damping: 25, stiffness: 300 };
+	const INDEX_ON_OPEN = 5;
+	const HEADER_HEIGHT_ON_OPEN = 60;
 	const animationsSettings = useSharedValue<WithSpringConfig>(NO_BOUNCE);
-	const isOpen = useSharedValue(false);
-	//Tap
 
+	const isOpen = useSharedValue(false);
+	const zIndex = useSharedValue(1);
 	//LongPress
 	const pressing = useSharedValue(0);
 
@@ -51,17 +55,17 @@ const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children 
 			pressing.value = 0;
 			if (!success) return null;
 			if (e.duration >= timeUntilLongPressTrigger) {
-				isOpen.value = !isOpen.value;
+				isOpen.value = true;
+				zIndex.value = INDEX_ON_OPEN;
 				return console.log(`Long pressed for ${e.duration} ms!`);
 			}
 		});
-
-	//Tap gesture declaration
 
 	const openOnTap = Gesture.Tap().onStart(() => {
 		if (isOpen.value) return null;
 		animationsSettings.value = NO_BOUNCE;
 		isOpen.value = true;
+		zIndex.value = INDEX_ON_OPEN;
 	});
 
 	//Fling gesture declaration
@@ -79,9 +83,11 @@ const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children 
 				finalPosY.value = e.y;
 				if (initialPosY.value - e.y > 50) {
 					isOpen.value = true;
+					zIndex.value = INDEX_ON_OPEN;
 				}
 			}
 		});
+
 	useDerivedValue(() => {
 		if (Math.abs(finalPosY.value) > 10) {
 			finalPosY.value = withTiming(0, { duration: 50 });
@@ -99,16 +105,25 @@ const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children 
 				//Long press related
 				{ scale: withTiming(interpolate(pressing.value, [0, 1], [1, 0.8]), { duration: timeUntilLongPressTrigger }) },
 			],
+			zIndex: zIndex.value,
 			//Long press related
 			opacity: withTiming(interpolate(pressing.value, [0, 1], [1, 0.5]), { duration: timeUntilLongPressTrigger }),
 			backgroundColor: "#353535",
 			borderRadius: 15,
+			position: "absolute",
+			left: withSpring(isOpen.value ? 0 : initialCoordinates.x, animationsSettings.value),
+			bottom: withSpring(isOpen.value ? 0 : initialCoordinates.y, animationsSettings.value),
+			marginLeft: withSpring(isOpen.value ? size.final.marginL : 0, animationsSettings.value),
+			marginBottom: withSpring(isOpen.value ? size.final.marginB : 0, animationsSettings.value),
 		};
 	});
 	const contentStyles = useAnimatedStyle(() => {
 		return {
 			//Is open related
-			height: withSpring(isOpen.value ? size.final.height - 60 : size.initial.height, animationsSettings.value),
+			height: withSpring(
+				isOpen.value ? size.final.height - HEADER_HEIGHT_ON_OPEN : size.initial.height,
+				animationsSettings.value
+			),
 		};
 	});
 
@@ -144,15 +159,18 @@ const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children 
 			})
 			.onEnd((e, success) => {
 				if (!isOpen.value) return null;
-				if (success) return (isOpen.value = false);
+				if (success) {
+					zIndex.value = withDelay(200, withTiming(1));
+					return (isOpen.value = false);
+				}
 			});
 
 		const headerStyles = useAnimatedStyle(() => {
 			return {
 				position: "relative",
 				width: "100%",
-				height: withTiming(isOpen.value ? 60 : 0),
-				transform: [{ scale: withTiming(isOpen.value ? 1 : 0) }],
+				height: withTiming(isOpen.value ? HEADER_HEIGHT_ON_OPEN : 0),
+				transform: [{ scale: withTiming(isOpen.value ? 1 : 0, { duration: 0.2 }) }],
 			};
 		});
 
@@ -172,6 +190,7 @@ const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children 
 						}}
 						onPress={() => {
 							isOpen.value = false;
+							zIndex.value = withDelay(200, withTiming(1));
 							animationsSettings.value = NO_BOUNCE;
 						}}>
 						<Text style={{ color: "#BCB9B9" }}>X</Text>

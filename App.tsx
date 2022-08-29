@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
 
 export default function App() {
 	const { width: scWidth, height: scHeight } = Dimensions.get("window");
-	const initialSize = {
+	const size = {
 		initial: {
 			width: scWidth / 2,
 			height: scWidth / 2,
@@ -38,16 +38,39 @@ export default function App() {
 		final: {
 			width: scWidth * 0.9,
 			height: scHeight * 0.9,
+			marginL: scWidth * 0.05,
+			marginB: scHeight * 0.05,
 		},
 	};
-	const [gamer, setGamer] = useState(0);
+	const size2 = {
+		initial: {
+			width: scWidth,
+			height: scWidth / 2,
+		},
+		final: {
+			width: scWidth * 0.9,
+			height: scHeight * 0.9,
+			marginL: scWidth * 0.05,
+			marginB: scHeight * 0.05,
+		},
+	};
 
 	return (
 		<GestureHandlerRootView>
 			<StatusBar style={"light"} />
-			<View style={[styles.container, styles.center]}>
-				<ComponentOnLongPress size={initialSize}>
-					<View style={{ height: "100%" }}>
+			<View style={[styles.container, styles.center, { position: "relative" }]}>
+				<ComponentOnLongPress size={size} initialCoordinates={{ x: 0, y: scHeight / 2 }}>
+					<View style={{ height: "100%", backgroundColor: "#80A4ED", borderRadius: 15 }}>
+						<Text>"lol"</Text>
+					</View>
+				</ComponentOnLongPress>
+				<ComponentOnLongPress size={size} initialCoordinates={{ x: scWidth - size.initial.width, y: scHeight / 2 }}>
+					<View style={{ height: "100%", backgroundColor: "#56E39F", borderRadius: 15 }}>
+						<Text>"lol"</Text>
+					</View>
+				</ComponentOnLongPress>
+				<ComponentOnLongPress size={size2} initialCoordinates={{ x: 0, y: 100 }}>
+					<View style={{ height: "100%", backgroundColor: "#FF8CC6", borderRadius: 15 }}>
 						<Text>"lol"</Text>
 					</View>
 				</ComponentOnLongPress>
