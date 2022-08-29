@@ -12,25 +12,39 @@ import Animated, {
 	WithSpringConfig,
 	withTiming,
 } from "react-native-reanimated";
-type Size = {
-	initial: { width: number; height: number };
-	final: { width: number; height: number; marginL: number; marginB: number };
-};
+type Size = { width: number; height: number };
 
 type PropTypes = {
 	size: Size;
 	initialCoordinates: { x: number; y: number };
 	timeUntilLongPressTrigger?: number;
 	children: JSX.Element;
+	screenSize: Size;
 };
 
-const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children, initialCoordinates }: PropTypes) => {
+const ComponentOnLongPress = ({
+	size,
+	timeUntilLongPressTrigger = 300,
+	children,
+	initialCoordinates,
+	screenSize,
+}: PropTypes) => {
+	const s = StyleSheet.create({
+		center: {
+			display: "flex",
+			justifyContent: "center",
+			alignItems: "center",
+		},
+	});
 	//General
 	const NO_BOUNCE = { damping: 100, stiffness: 300 };
 	const MID_BOUNCE = { damping: 26, stiffness: 300 };
 	const MAX_BOUNCE = { damping: 25, stiffness: 300 };
 	const INDEX_ON_OPEN = 5;
 	const HEADER_HEIGHT_ON_OPEN = 60;
+	const BG_COLOR = "#353535";
+	const CONTENT_WIDTH = screenSize.width * 0.9;
+	const CONTENT_HEIGHT = screenSize.height * 0.9;
 	const animationsSettings = useSharedValue<WithSpringConfig>(NO_BOUNCE);
 
 	const isOpen = useSharedValue(false);
@@ -94,59 +108,59 @@ const ComponentOnLongPress = ({ size, timeUntilLongPressTrigger = 300, children,
 		}
 	}, [finalPosY]);
 
-	const animatedStyles = useAnimatedStyle(() => {
+	const bgStyles = useAnimatedStyle(() => {
 		return {
 			//Is open related
-			width: withSpring(isOpen.value ? size.final.width : size.initial.width, animationsSettings.value),
-			height: withSpring(isOpen.value ? size.final.height : size.initial.height, animationsSettings.value),
+			width: withSpring(isOpen.value ? screenSize.width : size.width, NO_BOUNCE),
+			height: withSpring(isOpen.value ? screenSize.height : size.height, NO_BOUNCE),
 			transform: [
 				//Fling related
 				{ translateY: withSpring(finalPosY.value) },
 				//Long press related
 				{ scale: withTiming(interpolate(pressing.value, [0, 1], [1, 0.8]), { duration: timeUntilLongPressTrigger }) },
 			],
+			position: "absolute",
+			left: withSpring(isOpen.value ? 0 : initialCoordinates.x, NO_BOUNCE),
+			bottom: withSpring(isOpen.value ? 0 : initialCoordinates.y, NO_BOUNCE),
 			zIndex: zIndex.value,
+			borderRadius: isOpen.value ? 0 : 15,
 			//Long press related
 			opacity: withTiming(interpolate(pressing.value, [0, 1], [1, 0.5]), { duration: timeUntilLongPressTrigger }),
-			backgroundColor: "#353535",
+			backgroundColor: withDelay(240, withTiming(isOpen.value ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0)")),
+		};
+	});
+
+	const animatedStyles = useAnimatedStyle(() => {
+		return {
+			//Is open related
+			width: withSpring(isOpen.value ? CONTENT_WIDTH : size.width, animationsSettings.value),
+			height: withSpring(isOpen.value ? CONTENT_HEIGHT : size.height, animationsSettings.value),
+			backgroundColor: BG_COLOR,
 			borderRadius: 15,
-			position: "absolute",
-			left: withSpring(isOpen.value ? 0 : initialCoordinates.x, animationsSettings.value),
-			bottom: withSpring(isOpen.value ? 0 : initialCoordinates.y, animationsSettings.value),
-			marginLeft: withSpring(isOpen.value ? size.final.marginL : 0, animationsSettings.value),
-			marginBottom: withSpring(isOpen.value ? size.final.marginB : 0, animationsSettings.value),
 		};
 	});
 	const contentStyles = useAnimatedStyle(() => {
 		return {
 			//Is open related
-			height: withSpring(
-				isOpen.value ? size.final.height - HEADER_HEIGHT_ON_OPEN : size.initial.height,
-				animationsSettings.value
-			),
+			height: withSpring(isOpen.value ? CONTENT_HEIGHT - HEADER_HEIGHT_ON_OPEN : size.height, animationsSettings.value),
 		};
 	});
 
 	const composed = Gesture.Race(openOnTap, openOnLongPress, openOnFlingUp);
 
 	return (
-		<GestureDetector gesture={composed}>
-			<Animated.View style={animatedStyles}>
-				<Header />
-				<Animated.View style={contentStyles}>{children}</Animated.View>
-			</Animated.View>
-		</GestureDetector>
+		<Animated.View style={[bgStyles, s.center]}>
+			<GestureDetector gesture={composed}>
+				<Animated.View style={animatedStyles}>
+					<Header />
+					<Animated.View style={contentStyles}>{children}</Animated.View>
+				</Animated.View>
+			</GestureDetector>
+		</Animated.View>
 	);
 
 	function Header() {
 		console.log("rerender");
-		const s = StyleSheet.create({
-			center: {
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "center",
-			},
-		});
 
 		//Fling gesture declaration
 		const onFlingDownClose = Gesture.Fling()

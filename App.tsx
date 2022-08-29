@@ -30,47 +30,34 @@ const styles = StyleSheet.create({
 
 export default function App() {
 	const { width: scWidth, height: scHeight } = Dimensions.get("window");
-	const size = {
-		initial: {
-			width: scWidth / 2,
-			height: scWidth / 2,
-		},
-		final: {
-			width: scWidth * 0.9,
-			height: scHeight * 0.9,
-			marginL: scWidth * 0.05,
-			marginB: scHeight * 0.05,
-		},
-	};
-	const size2 = {
-		initial: {
-			width: scWidth,
-			height: scWidth / 2,
-		},
-		final: {
-			width: scWidth * 0.9,
-			height: scHeight * 0.9,
-			marginL: scWidth * 0.05,
-			marginB: scHeight * 0.05,
-		},
-	};
+	const initial = { width: scWidth / 2, height: scWidth / 2 };
+	const initial2 = { width: scWidth, height: scWidth / 2 };
 
 	return (
 		<GestureHandlerRootView>
 			<StatusBar style={"light"} />
 			<View style={[styles.container, styles.center, { position: "relative" }]}>
-				<ComponentOnLongPress size={size} initialCoordinates={{ x: 0, y: scHeight / 2 }}>
+				<ComponentOnLongPress
+					size={initial2}
+					initialCoordinates={{ x: 0, y: scHeight - initial2.height }}
+					screenSize={{ width: scWidth, height: scHeight }}>
 					<View style={{ height: "100%", backgroundColor: "#80A4ED", borderRadius: 15 }}>
 						<Text>"lol"</Text>
 					</View>
 				</ComponentOnLongPress>
-				<ComponentOnLongPress size={size} initialCoordinates={{ x: scWidth - size.initial.width, y: scHeight / 2 }}>
-					<View style={{ height: "100%", backgroundColor: "#56E39F", borderRadius: 15 }}>
+				<ComponentOnLongPress
+					size={initial}
+					initialCoordinates={{ x: 0, y: 0 }}
+					screenSize={{ width: scWidth, height: scHeight }}>
+					<View style={{ height: "100%", backgroundColor: "#80A4ED", borderRadius: 15 }}>
 						<Text>"lol"</Text>
 					</View>
 				</ComponentOnLongPress>
-				<ComponentOnLongPress size={size2} initialCoordinates={{ x: 0, y: 100 }}>
-					<View style={{ height: "100%", backgroundColor: "#FF8CC6", borderRadius: 15 }}>
+				<ComponentOnLongPress
+					size={initial}
+					initialCoordinates={{ x: scWidth - initial.width, y: 0 }}
+					screenSize={{ width: scWidth, height: scHeight }}>
+					<View style={{ height: "100%", backgroundColor: "#80A4ED", borderRadius: 15 }}>
 						<Text>"lol"</Text>
 					</View>
 				</ComponentOnLongPress>
